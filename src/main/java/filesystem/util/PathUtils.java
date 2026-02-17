@@ -68,7 +68,9 @@ public class PathUtils {
                 if (!resolved.isEmpty()) {
                     resolved.remove(resolved.size() - 1);
                 }
-                // At root, stay at root (don't throw error)
+                // Edge case: Attempting to navigate above root (when resolved is empty)
+                // silently keeps the user at root - this is intentional behavior to match
+                // standard Unix filesystem semantics where 'cd /' followed by 'cd ..' stays at root
             } else {
                 resolved.add(segment);
             }

@@ -142,7 +142,9 @@ public class FileSystem {
             }
         }
         
-        // WRITE LOCK for entire cd - ensures atomicity
+        // WRITE LOCK for entire cd - ensures atomicity when updating both
+        // currentPathSegments and currentDirectory together. This prevents race
+        // conditions where another thread could observe an inconsistent state
         stateLock.writeLock().lock();
         try {
             List<String> segments = PathUtils.resolvePath(
@@ -293,17 +295,18 @@ public class FileSystem {
     /**
      * Resets the file system to its initial state (useful for testing).
      */
+    /**
+     * Resets the file system to its initial state (useful for testing).
+     * Clears all children from the root directory and resets the current directory to root.
+     */
     public void reset() {
         stateLock.writeLock().lock();
         try {
-            // Clear the root directory
-            DirectoryNode newRoot = new DirectoryNode("");
-            // We can't replace root, so we clear it by creating new children map
-            // However, since children is final, we use a different approach
+            // Reset current directory to root
             currentPathSegments = new ArrayList<>();
             currentDirectory = root;
             
-            // Clear all children from root
+            // Clear all children from root directory
             for (String child : root.listChildren()) {
                 root.compute(child, (name, node) -> null);
             }
